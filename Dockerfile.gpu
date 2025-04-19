@@ -43,6 +43,20 @@ COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js swagger-ui-ass
 RUN poetry install
 RUN $POETRY_VENV/bin/pip install torch==2.6.0+cu126 torchaudio==2.6.0+cu126 --index-url https://download.pytorch.org/whl/cu126
 
+# Install git for whisperx
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -qq update \
+    && apt-get -qq install --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Allow direct install from commit hash
+RUN $POETRY_VENV/bin/pip install \
+    git+https://github.com/m-bain/whisperX.git@0aed8745890f12ecfe0b2d9c4ba62bcdfb16f94e#egg=whisperX
+
+# Fix issue about dependencies Unable to load any of {libcudnn_cnn.so.9.1.0, libcudnn_cnn.so.9.1, libcudnn_cnn.so.9, libcudnn_cnn.so}
+RUN $POETRY_VENV/bin/pip install ctranslate2==4.4.0
+
 EXPOSE 9000
 
 CMD whisper-asr-webservice
